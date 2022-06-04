@@ -1,0 +1,120 @@
+VAR NL == 13,10,0;
+VAR EXIT_CMD == "EXIT", 0;
+VAR HELP_CMD == "HELP", 0;
+VAR ECHO_CMD == "ECHO", 0;
+VAR BADCOM == "Bad command or file name.",13,10, 0;
+VAR BOOTSCR == "echoOS",13,10,13,10,0;
+VAR SHUTDOWN_ERR == "Cannot shutdown.",13,10,0;
+VAR COMMAND_LIST == "Command list:",13,10,"HELP      ---Shows list of commands.",13,10,"EXIT      ---Shuts the computer down.",13,10,"ECHO      ---Repeats entered text.",13,10,0;
+ASM *CLI*;
+
+SET AX = 0;
+SET SS = AX;
+SET SP = 0FFFFh;
+ASM *STI*;
+ASM *CLD*;
+#
+Set Segment to 2000H
+;
+SEGMENT(2000H);
+
+#
+Print boot screen
+;
+SET SI = BOOTSCR;
+OUT16();
+
+#
+echoOS Main Loop
+;
+DEF MAIN_LOOP();
+	#
+	Get Input in TESTSTR variable
+	;
+	SET AX = TESTSTR;
+	SCAN16();
+	#
+	Print a NewLine
+	;
+	SET SI = NL;
+	OUT16();
+	SET SI = TESTSTR;
+	SET DI = HELP_CMD;
+	STRCOMP16();
+	# Did the user type "HELP"? ;
+	IF [COMPARE_EQUAL] = 1;
+		# Yes, execute HELP ;
+		HELP_CFUN();
+		GOTO MAIN_LOOP;
+	FI;
+	SET DI = EXIT_CMD;
+	STRCOMP16();
+	# Did the user type "EXIT"? ;
+	IF [COMPARE_EQUAL] = 1;
+		# Yes, execute EXIT ;
+		EXIT_CFUN();
+		GOTO MAIN_LOOP;
+	FI;
+	SET DI = ECHO_CMD;
+	STRCOMP16();
+	# Did the user type "ECHO"? ;
+	IF [COMPARE_EQUAL] = 1;
+		# Yes, execute ECHO ;
+		ECHO_CFUN();
+		GOTO MAIN_LOOP;
+	FI;
+	SET SI = BADCOM;
+	OUT16();
+	GOTO MAIN_LOOP;
+	
+DEF ECHO_CFUN();
+	#
+	Get Input in TESTSTR variable
+	;
+	SET AX = TESTSTR;
+	SCAN16();
+	#
+	Print a NewLine
+	;
+	SET SI = NL;
+	OUT16();
+	#
+	Echo it
+	;
+	SET SI = TESTSTR;
+	OUT16();
+	#
+	Print a NewLine
+	;
+	SET SI = NL;
+	OUT16();
+	RETURN;
+	
+#
+Help command
+;
+DEF HELP_CFUN();
+	SET SI = COMMAND_LIST;
+	OUT16();
+	RETURN;
+	
+#
+Shutdown function
+(exit command)
+;
+DEF EXIT_CFUN();
+	SET AX = 0x1000;
+    SET AX = SS;
+    SET SP = 0xF000;
+    SET AX = 0x5307;
+    SET BX = 0x0001;
+    SET CX = 0x0003;
+    INT(15H);
+	SET SI = SHUTDOWN_ERR;
+	OUT16();
+	RETURN;
+	
+ASM *TESTSTR: TIMES 255 DB 0*;
+
+INCLUDE STDIO.INC;
+INCLUDE STRTOOL.INC;
