@@ -2,6 +2,7 @@ VAR NL == 13,10,0;
 VAR EXIT_CMD == "EXIT", 0;
 VAR HELP_CMD == "HELP", 0;
 VAR ECHO_CMD == "ECHO", 0;
+VAR SYM == ">", 0;
 VAR BADCOM == "Bad command or file name.",13,10, 0;
 VAR BOOTSCR == "echoOS",13,10,13,10,0;
 VAR SHUTDOWN_ERR == "Cannot shutdown.",13,10,0;
@@ -28,6 +29,8 @@ OUT16();
 echoOS Main Loop
 ;
 DEF MAIN_LOOP();
+	SET SI = SYM;
+	OUT16();
 	#
 	Get Input in TESTSTR variable
 	;
